@@ -7,27 +7,41 @@ namespace KubeSharpOperator.Pages
     {
         public void OnGet()
         {
+            // Get the base64 string from the environment variable "KUBE_CONFIG"
+            var kubeConfigBase64 = Environment.GetEnvironmentVariable("KUBE_CONFIG");
+            if (string.IsNullOrEmpty(kubeConfigBase64))
+            {
+                Console.WriteLine("Error: KUBE_CONFIG environment variable not set.");
+                return;
+            }
+
             try
             {
-                var config = KubernetesClientConfiguration.InClusterConfig();
+                // Decode the base64 string and save it as a file at the base of the project
+                byte[] kubeConfigBytes = Convert.FromBase64String(kubeConfigBase64);
+                string kubeConfigFilePath = "kubeconfig.yaml"; // Change this to the desired file name and extension
+                System.IO.File.WriteAllBytes(kubeConfigFilePath, kubeConfigBytes);
+
+                // Build the Kubernetes client configuration from the file
+                var config = KubernetesClientConfiguration.BuildConfigFromConfigFile(kubeConfigFilePath);
                 var client = new Kubernetes(config);
 
-                var namespaces = client.CoreV1.ListNamespace();
+                var namespaces = client.ListNamespace();
                 var itemList = new List<string>();
                 foreach (var ns in namespaces.Items)
                 {
                     Console.WriteLine($"Namespace: {ns.Metadata.Name}");
-                    var list = client.CoreV1.ListNamespacedPod(ns.Metadata.Name);
+                    var list = client.ListNamespacedPod(ns.Metadata.Name);
                     foreach (var item in list.Items)
                     {
-                        Console.WriteLine(item.Metadata.Name);
-                        itemList.Add($"{ns.Metadata.Name}:{item.Metadata.Name}");
+                        Console.WriteLine($"--- {ns.Metadata.Name}:{item.Metadata.Name}");
+                        itemList.Add($"--- {ns.Metadata.Name}:{item.Metadata.Name}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.ToString());
+                Console.WriteLine($"Error: {ex.Message}");
             }
         }
     }

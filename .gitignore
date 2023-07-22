@@ -8,7 +8,7 @@
 
 
 # Specific Project Files
-
+kubeconfig.yaml
 
 # dotenv environment variables file
 .env
