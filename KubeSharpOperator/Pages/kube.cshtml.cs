@@ -78,6 +78,24 @@ namespace KubeSharpOperator.Pages
                                 {
                                     Name = "testjob",
                                     Image = containerImage,
+                                    Env = new List<V1EnvVar>
+                                    {
+                                        new V1EnvVar
+                                        {
+                                            Name = "HOSTNAME",
+                                            Value = "dotnetevolved.com"
+                                        },
+                                        new V1EnvVar
+                                        {
+                                            Name = "LOOPCOUNT",
+                                            Value = "5"
+                                        },
+                                        new V1EnvVar
+                                        {
+                                            Name = "SLEEPTIME",
+                                            Value = "5000"
+                                        }
+                                    }
                                 }
                             },
                             RestartPolicy = "Never",
