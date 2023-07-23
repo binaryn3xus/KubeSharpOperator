@@ -80,7 +80,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            ${{ env.REGISTRY }}/TestJob
           tags: |
             type=edge,branch=main
             type=semver,pattern={{version}}
