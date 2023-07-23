@@ -1,12 +1,18 @@
 ﻿// See https://aka.ms/new-console-template for more information
 using System.Net.NetworkInformation;
+using TestJob.Extensions;
 
 Console.WriteLine("Starting Job!");
 
-string hostNameOrAddress = "google.com"; // Replace with the host you want to ping
-int loopCount = 10;
+string hostNameOrAddress = EnvironmentExtensions.ParseStringFromEnvironmentVariable("HOSTNAME", "google.com"); // Replace with the host you want to ping
+int loopCount = EnvironmentExtensions.ParseIntFromEnvironmentVariable("LOOPCOUNT", 10);
+int sleepTimeMs = EnvironmentExtensions.ParseIntFromEnvironmentVariable("SLEEPTIME", 10000); ;
 
-for(int i = 0; i < loopCount; i++)
+Console.WriteLine("Host: " + hostNameOrAddress);
+Console.WriteLine("Loop Count: " + loopCount);
+Console.WriteLine("Sleep Time (ms): " + sleepTimeMs);
+
+for (int i = 1; i <= loopCount; i++)
 {
     using Ping pingSender = new Ping();
     try
@@ -27,6 +33,6 @@ for(int i = 0; i < loopCount; i++)
     {
         Console.WriteLine($"Ping to {hostNameOrAddress} failed with exception: {ex.Message}");
     }
-    Thread.Sleep(10000);
+    Thread.Sleep(sleepTimeMs);
 }
 
