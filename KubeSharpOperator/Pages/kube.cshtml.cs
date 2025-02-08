@@ -61,12 +61,12 @@ namespace KubeSharpOperator.Pages
                 }
 
                 Console.WriteLine("Successfully created Kubernetes client");
-                var namespaces = client.ListNamespace();
+                var namespaces = client.CoreV1.ListNamespace();
                 Console.WriteLine($"Found {namespaces.Items.Count} namespaces");
 
                 foreach (var ns in namespaces.Items)
                 {
-                    var list = client.ListNamespacedPod(ns.Metadata.Name);
+                    var list = client.CoreV1.ListNamespacedPod(ns.Metadata.Name);
                     Console.WriteLine($"Found {list.Items.Count} pods in namespace {ns.Metadata.Name}");
 
                     foreach (var item in list.Items)
@@ -84,9 +84,11 @@ namespace KubeSharpOperator.Pages
             return itemList;
         }
 
+        // ...
+
         private bool IsRunningInKubernetes()
         {
-            var isInK8s = File.Exists("/var/run/secrets/kubernetes.io/serviceaccount/token");
+            var isInK8s = System.IO.File.Exists("/var/run/secrets/kubernetes.io/serviceaccount/token");
             Console.WriteLine($"IsRunningInKubernetes check: {isInK8s}");
             return isInK8s;
         }
