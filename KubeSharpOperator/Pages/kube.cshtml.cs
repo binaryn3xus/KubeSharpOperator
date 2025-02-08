@@ -38,12 +38,37 @@ namespace KubeSharpOperator.Pages
             var itemList = new List<string>();
             try
             {
-                var client = KubernetesClientExtensions.BuildConfigFromEnvVariable("KUBE_CONFIG");
+                // Initialize Kubernetes client based on environment
+                IKubernetes client;
+                var kubeConfigEnvVar = Environment.GetEnvironmentVariable("KUBE_CONFIG");
 
+                if (IsRunningInKubernetes())
+                {
+                    Console.WriteLine("Using InCluster configuration");
+                    var config = KubernetesClientConfiguration.InClusterConfig();
+                    client = new k8s.Kubernetes(config);
+                }
+                else if (!string.IsNullOrEmpty(kubeConfigEnvVar))
+                {
+                    Console.WriteLine("Using KUBE_CONFIG environment variable");
+                    client = KubernetesClientExtensions.BuildConfigFromEnvVariable("KUBE_CONFIG");
+                }
+                else
+                {
+                    Console.WriteLine("Using default kubeconfig file location");
+                    var config = KubernetesClientConfiguration.BuildConfigFromConfigFile();
+                    client = new k8s.Kubernetes(config);
+                }
+
+                Console.WriteLine("Successfully created Kubernetes client");
                 var namespaces = client.ListNamespace();
+                Console.WriteLine($"Found {namespaces.Items.Count} namespaces");
+
                 foreach (var ns in namespaces.Items)
                 {
                     var list = client.ListNamespacedPod(ns.Metadata.Name);
+                    Console.WriteLine($"Found {list.Items.Count} pods in namespace {ns.Metadata.Name}");
+
                     foreach (var item in list.Items)
                     {
                         itemList.Add($"{ns.Metadata.Name}:{item.Metadata.Name}");
@@ -52,16 +77,24 @@ namespace KubeSharpOperator.Pages
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error: {ex.Message}");
+                Console.WriteLine($"Error in GetPods: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                itemList.Add($"Error: {ex.Message}");
             }
             return itemList;
+        }
+
+        private bool IsRunningInKubernetes()
+        {
+            var isInK8s = File.Exists("/var/run/secrets/kubernetes.io/serviceaccount/token");
+            Console.WriteLine($"IsRunningInKubernetes check: {isInK8s}");
+            return isInK8s;
         }
 
         private async Task CreateSimpleJobAsync(string namespaceName, string jobName, string containerImage)
         {
             var jobSpec = new V1Job
             {
-                // Your Job specification, using the provided container image
                 Metadata = new V1ObjectMeta { Name = jobName },
                 Spec = new V1JobSpec
                 {
@@ -108,6 +141,7 @@ namespace KubeSharpOperator.Pages
             var client = KubernetesClientExtensions.BuildConfigFromEnvVariable("KUBE_CONFIG");
             await client.CreateNamespacedJobAsync(jobSpec, namespaceName);
         }
+
         private async Task DeleteExistingJobAsync(string namespaceName, string jobName)
         {
             var client = KubernetesClientExtensions.BuildConfigFromEnvVariable("KUBE_CONFIG");
